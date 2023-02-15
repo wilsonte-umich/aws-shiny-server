@@ -56,6 +56,7 @@ sudo chown -R ubuntu aws-shiny-server # set permissions
 cd aws-shiny-server
 ./server          # show command help
 ./server setup    # install Docker, set additional paths
+newgrp docker     # activate the current session to allow docker access
 ./server build    # build the base-level Docker containers (without your app yet)
 ./server install  # install common R packages
 ```
