@@ -52,7 +52,6 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plu
 # allow user ubuntu to control docker without sudo
 echo 
 echo "adding ubuntu to docker group"
-sudo groupadd docker
 sudo usermod -aG docker ubuntu
 newgrp docker
 
