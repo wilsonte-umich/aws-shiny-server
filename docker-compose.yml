@@ -1,0 +1,128 @@
+#------------------------------------------------------------------------
+# docker compose file that declares the web services
+#------------------------------------------------------------------------
+version: "3.9"
+
+# create services (with potentially one or running multiple containers per service)
+services:
+
+  # Traefik reverse proxy and load balancer
+  traefik:
+    image: traefik:v2.7
+    depends_on:
+      - docker-proxy
+    restart: always      
+    command: 
+      - "--log.filePath=/traefik.log"
+      - "--log.level=ERROR"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=docker-access"
+      - "--providers.docker.endpoint=tcp://docker-proxy:2375"
+      - "--entrypoints.https.address=:443"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.http.http.redirections.entryPoint.to=https"
+      - "--certificatesResolvers.letsencrypt.acme.storage=/certificates/acme.json"
+      - "--certificatesResolvers.letsencrypt.acme.httpChallenge.entrypoint=http"
+      - "--certificatesResolvers.letsencrypt.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"     
+      - "--certificatesResolvers.letsencrypt.acme.email=${WEBMASTER_EMAIL}"
+      # enable the dashboard to debug this compose stack
+      # - "--api.insecure=true"      
+    networks:
+      - docker-access
+      - public-server
+    ports:
+      - 443:443
+      - 80:80
+      # - 8080:8080
+    volumes:
+      - TLS-certificates:/certificates
+
+  # Docker socket proxy to limit Traefik's access to the docker engine
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy
+    depends_on:
+      - session-initialization
+      - app-server    
+    environment:
+      # only enable Docker API for container discovery; "1" means "true" or "allow"  
+      CONTAINERS: 1 
+    networks:
+        - docker-access  
+    volumes:
+      # only this proxy has direct access to the Docker engine
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  # service to set a secure cookie to initialize a user session, via https://WEB_DOMAIN/session
+  session-initialization:
+    build: ./session-initialization
+    networks:
+      - public-server
+    environment:
+      - WEB_DOMAIN
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.session-initialization.rule=Host(`${WEB_DOMAIN}`) && Path(`/session`)"
+      -  traefik.http.routers.session-initialization.entryPoints=https
+      -  traefik.http.routers.session-initialization.tls.certresolver=letsencrypt         
+
+  # the R Shiny, web applications server
+  app-server:
+    build: 
+      context: ./app-server
+    command: ["Rscript", "start-app-server.R"]
+    networks:
+      - public-server    
+    environment:
+      - WEB_DOMAIN
+      - IS_DEBUG
+    volumes:
+      # this permanent Docker volume stores the R package library
+      - package-dir:${PACKAGE_DIR}
+      # bind mounts are ideal for data transfers into and out of the web page
+      - /srv/app:/srv/app
+      - /srv/data:/srv/data
+      - /srv/private:/srv/private  
+    labels:
+      - traefik.enable=true
+      # low priority, allow other services first chance at routing
+      - traefik.http.routers.app-server.priority=1   
+      - "traefik.http.routers.app-server.rule=Host(`${WEB_DOMAIN}`)"
+      - traefik.http.routers.app-server.entryPoints=https
+      - traefik.http.routers.app-server.tls.certresolver=letsencrypt      
+      - traefik.http.services.app-server.loadbalancer.server.scheme=http
+      - traefik.http.services.app-server.loadbalancer.server.port=3838
+      - traefik.http.services.app-server.loadbalancer.sticky.cookie.name=aws-shiny-app
+      - traefik.http.services.app-server.loadbalancer.sticky.cookie.secure=true      
+      - traefik.http.services.app-server.loadbalancer.sticky.cookie.httpOnly=true
+      - traefik.http.services.app-server.loadbalancer.sticky.cookie.sameSite=strict
+
+  # # test container for debugging this compose stack
+  # whoami:
+  #   image: traefik/whoami
+  #   networks:
+  #       - public-server   
+  #   labels:
+  #     - traefik.enable=true
+  #     - "traefik.http.routers.whoami.rule=Host(`${WEB_DOMAIN}`) && Path(`/whoami`)"
+  #     - traefik.http.routers.whoami.entrypoints=https
+  #     - traefik.http.routers.whoami.tls.certresolver=letsencrypt
+  #     - traefik.http.services.whoami.loadbalancer.server.scheme=http
+  #     - traefik.http.services.whoami.loadbalancer.server.port=80      
+  #     - traefik.http.services.whoami.loadbalancer.sticky.cookie.name=aws-shiny-whoami
+  #     - traefik.http.services.whoami.loadbalancer.sticky.cookie.secure=true
+  #     - traefik.http.services.whoami.loadbalancer.sticky.cookie.httpOnly=true
+
+# create Docker volumes ...
+volumes:
+  # ... to store TLS certificates
+  TLS-certificates:
+  # ... to install the app and store its shared working libraries, data, etc.
+  package-dir:
+
+# declare Docker networks ...
+networks:
+    # ... for Traefik to poll Docker engine via read-only proxy
+    docker-access:
+    # ... for Traefik to route to session and app servers
+    public-server:
