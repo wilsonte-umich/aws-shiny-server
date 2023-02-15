@@ -1,4 +1,4 @@
-# install all R packages required by the app
+# install all R packages required by the server and apps
 
 # initialize
 env <- as.list(Sys.getenv())
@@ -6,8 +6,11 @@ env <- as.list(Sys.getenv())
 
 # enumerate common required packages, including the large shiny package and its dependencies
 commonPackages <- c(
-    "shiny", # obvious
-    "yaml"   # required to load the app library list
+    "shiny",   # obvious
+    "yaml",    # required to load the app library list
+    "shinyjs", # used to support user authentication
+    "httr",
+    "urltools"
 )
 
 # install missing common packages
@@ -29,20 +32,23 @@ installMissingPackages <- function(packages){
 installMissingPackages(commonPackages)
 
 # discover and install app packages
-appDir <- if(is.null(env$APP_GITHUB_REPO) || env$APP_GITHUB_REPO == "") {
-    list.dirs(path = env$APP_DIR, full.names = TRUE, recursive = FALSE)[1] # default to the only expected app subdir
+appDirs <- if(is.null(env$APP_GITHUB_REPO) || env$APP_GITHUB_REPO == "") {
+    list.dirs(path = env$APPS_DIR, full.names = TRUE, recursive = FALSE) # multi-app installation
 } else {
-    repo <- gsub(".git", "", basename(env$APP_GITHUB_REPO))
-    file.path(env$APP_DIR, repo)
+    repo <- gsub(".git", "", basename(env$APP_GITHUB_REPO)) # single-app installation
+    file.path(env$APPS_DIR, repo)
 }
-if(is.na(appDir) || !dir.exists(appDir)){
-    message("missing app directory, aborting with nothing to do")
+if(is.na(appDirs) || !dir.exists(appDirs[1])){
+    message("missing app directory(s), aborting with nothing to do")
     q('no')
 }
-appPackagesFile <- file.path(appDir, "install-packages.yml")
-if(!file.exists(appPackagesFile)){
-    message("missing app install-packages.yml file, aborting with nothing to do")
+appPackages <- unique(sapply(appDirs, function(appDir){
+    appPackagesFile <- file.path(appDir, "install-packages.yml")
+    if(!file.exists(appPackagesFile)) return(character())
+    unlist(yaml::read_yaml(appPackagesFile))  
+}))
+if(length(appPackages) == 0){
+    message("no app R package requirements found, aborting with nothing to do")
     q('no')
 }
-appPackages <- unique(unlist(yaml::read_yaml(appPackagesFile)))
 installMissingPackages(appPackages)

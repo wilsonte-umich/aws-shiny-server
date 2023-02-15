@@ -8,7 +8,7 @@ function show_usage {
     echo "server execution commands (in order of usage):"
     echo "    setup     run this command once to install Docker and perform other system tasks"   
     echo "    config    use nano to edit the server configuration file" 
-    echo "    clone     use git to clone your Shiny app code repository"   
+    echo "    clone     use git to clone a single Shiny app code repository"   
     echo "    build     run docker compose build to create all needed Docker images"
     echo "    install   update the server config, clone GitHub repos, install R packages"
     echo "    up        launch all containers to run the app server"
@@ -23,7 +23,7 @@ function show_usage {
 
 # get ready
 export BASE_DIR=/srv
-export APP_DIR=$BASE_DIR/app
+export APPS_DIR=$BASE_DIR/apps
 export DATA_DIR=$BASE_DIR/data
 export SERVER_DIR=$BASE_DIR/aws-shiny-server
 export PRIVATE_DIR=$BASE_DIR/private

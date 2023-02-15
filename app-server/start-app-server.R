@@ -1,16 +1,23 @@
-# set environment variable to honor system library in server images
-# Sys.setenv(CONTAINER_R_LIBRARY = "/usr/local/lib/R/site-library")
+# launch the apps server
 
-# # launch the web server
-# mdi::run(
-#   mdiDir = Sys.getenv("SRV_DIR"),
-#   dataDir = NULL,
-#   hostDir = NULL,
-#   mode = "server",
-#   install = TRUE,
-#   url = paste0("https://", Sys.getenv("WEB_DOMAIN"), "/"),
-#   port = 3838, # reverse proxy responds on 443, R responds on 3838 on the docker public-server network # nolint
-#   browser = FALSE,
-#   debug = as.logical(Sys.getenv("IS_DEBUG")),
-#   developer = FALSE # never TRUE on a public server
-# )
+serverEnv <- as.list(Sys.getenv())
+.libPaths(serverEnv$PACKAGE_DIR)
+
+library(shiny)
+library(yaml)
+library(shinyjs)
+library(httr)
+library(urltools)
+
+source("authentication.R")
+
+serverEnv$SERVER_URL <- paste0("https://", serverEnv$WEB_DOMAIN)
+serverEnv$REQUIRES_AUTHENTICATION <- isTruthy(serverEnv$GOOGLE_CLIENT_ID) || isTruthy(serverEnv$GOOGLE_CLIENT_SECRET)
+serverEnv$SERVER_ID <- sample(1e8, 1)
+
+runApp(
+    appDir = '.',
+    host = "0.0.0.0",   
+    port = 3838, # on _first_ call, could be NULL for port auto-selection by Shiny
+    launch.browser = FALSE
+)

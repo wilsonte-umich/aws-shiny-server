@@ -13,14 +13,24 @@ export WEB_DOMAIN="example.org"
 export R_VERSION="4.2.0"
 
 # number of R Shiny server processes to run
-# 1 process per 2 CPUs is a good choice, but you can overload more aggressively
+# 1 process per CPU is common, but you can overload or leave processors free for asynchronous tasks
 export N_SERVER_PROCESSES=1
 
 #-------------------------------------------------------------
 # OPTIONAL
 #-------------------------------------------------------------
 
-# the URL of the GitHub repository that carries your Shiny app
+# the URL of the GitHub repository that carries your _single_ Shiny app
 # see documentation for repo requirements
-# alternatively, you may popuplate /srv/app/<YOUR_APP_NAME> another way
-export GITHUB_REPO=""
+# alternatively, you may populate /srv/apps/<YOUR_APP_NAME> another way
+# leave this entry blank if your server will host multiple apps, they must be added manually
+export APP_GITHUB_REPO=""
+
+# the parameters that define your Google web app
+# see: 
+#    https://console.cloud.google.com/
+#    https://developers.google.com/identity/protocols/oauth2
+# if specified, these will be used to _authenticate_ users (_authorization_ is up to your app!)
+# if left blank, your server and apps will be accessible by anyone on the internet
+export GOOGLE_CLIENT_ID=""
+export GOOGLE_CLIENT_SECRET=""

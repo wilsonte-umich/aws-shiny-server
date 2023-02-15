@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #---------------------------------------------------------------
-# Script to set up an AWS Ubuntu instance for using aws-shiny-server.
+# script to set up an AWS Ubuntu instance for using aws-shiny-server.
 #---------------------------------------------------------------
 IS_INSTALLED=`which docker`
 if [[ "$IS_INSTALLED" != "" && "$1" == "" ]]; then
@@ -64,13 +64,13 @@ sudo usermod -a -G shiny-edit ubuntu
 echo 
 echo "initializing /srv file tree"
 cd /srv
-sudo mkdir -p app     # for app server code
+sudo mkdir -p apps    # for app server code
 sudo mkdir -p data    # for external data bind-mounted into running instances
 sudo mkdir -p private # for non-repository information such as access keys
-sudo chown -R ubuntu     app data private aws-shiny-server
+sudo chown -R ubuntu     apps data private aws-shiny-server
 sudo chmod -R u+rwx      private aws-shiny-server
-sudo chgrp -R shiny-edit app data
-sudo chmod -R ug+rwx     app data
+sudo chgrp -R shiny-edit apps data
+sudo chmod -R ug+rwx     apps data
 
 #---------------------------------------------------------------
 # continue as user ubuntu (i.e., not sudo) to populate /srv
