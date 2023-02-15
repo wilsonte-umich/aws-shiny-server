@@ -53,7 +53,6 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plu
 echo 
 echo "adding ubuntu to docker group"
 sudo usermod -aG docker ubuntu
-newgrp docker
 
 # set server groups
 echo 
