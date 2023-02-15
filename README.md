@@ -36,7 +36,7 @@ and manage all microservice images.
 The recommended way to start a new app server on AWS
 is to launch a new instance from one of our pre-installed AMIs:
 
-- <https://pending>
+- [aws-shiny-server AWS AMIs](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#Images:visibility=public-images;search=:aws-shiny-server)
 
 Log in as you would to any other AWS instance and continue to configure your app, below.
 
