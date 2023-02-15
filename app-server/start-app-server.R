@@ -8,6 +8,7 @@ library(yaml)
 library(shinyjs)
 library(httr)
 library(urltools)
+library(digest)
 
 source("authentication.R")
 

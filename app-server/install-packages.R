@@ -10,7 +10,10 @@ commonPackages <- c(
     "yaml",    # required to load the app library list
     "shinyjs", # used to support user authentication
     "httr",
-    "urltools"
+    "urltools",
+    "digest"
+    # "openssl"
+    # "jose"
 )
 
 # install missing common packages

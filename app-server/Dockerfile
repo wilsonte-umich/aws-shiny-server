@@ -60,6 +60,7 @@ COPY ./start-app-server.R    $TOOLS_DIR/start-app-server.R
 COPY ./ui.R                  $TOOLS_DIR/ui.R
 COPY ./server.R              $TOOLS_DIR/server.R
 COPY ./authentication.R      $TOOLS_DIR/authentication.R
+COPY ./server.js             $TOOLS_DIR/www/server.js
 
 # if this image is run as a container manually, just provide a command line
 # start-app-server.R is called via 'command' in docker-compose.yml

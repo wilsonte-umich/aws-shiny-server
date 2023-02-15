@@ -58,8 +58,6 @@ parseAuthenticationRequest <- function(queryString, cookie){
     } else {
         if(file.exists(getAuthenticatedSessionFile('session', cookie$sessionKey))){ # non-cookie check for an authenticated session # nolint
             getLaunchPage(cookie)
-        } else if(serverEnv$IS_KEYED){
-            getLaunchPage(cookie, restricted = TRUE)
         } else {
             redirectToOauth2Login(cookie$sessionKey) # allow oauth2 users to quickly pass authentication via prior SSO
         }

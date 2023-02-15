@@ -12,17 +12,7 @@ serverFn <- function(input, output, session,
 
     # collect client data
     queryString <- parseQueryString(isolate(session$clientData$url_search))
-    if(!serverEnv$IS_SERVER) isolate({
-        port <- session$clientData$url_port
-        if(!is.null(port) && port != "") setServerPort(as.integer(port))
-    })
-
-    # enforce single-user access when running remotely on a shared resource
-    if(!checkMdiRemoteKey(queryString)) return(NULL)
-    if(length(queryString) > 0) updateQueryString( # clear the url
-        paste0("?", getRemoteKeyQueryString()), 
-        mode = "push"
-    )
+    if(length(queryString) > 0) updateQueryString("?", mode = "push") # clear the url
 
     # public servers demand user authentication; ui is redirecting
     if(serverEnv$REQUIRES_AUTHENTICATION &&  # allow all local page loads
@@ -34,35 +24,29 @@ serverFn <- function(input, output, session,
     # source the code that defines a session
     sessionInput <- input
     sessionSession <- session
-    source("server/initializeSession.R", local = TRUE)
-    if(!initializeSessionSuccess) return( show(CONSTANTS$apps$scriptSourceError) )
-    show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)
-         CONSTANTS$apps$serverBusy else CONSTANTS$apps$launchPage)        
-    createSpinner() # create the loading spinner
-    source("server/observeAuthentication.R", local = TRUE)
-    source("server/initializeLaunchPage.R", local = TRUE)
-    source("server/observeLoadRequest.R", local = TRUE)
-    source("server/onSessionEnded.R", local = TRUE)
-    # observeEvent(input$loadDebugRestart, {
-    #     # Sys.setenv(MDI_FORCE_RESTART = "TRUE")
-    #     stopApp()
-    # })
-    # observeEvent(input$loadDebugMessage, {
-    #     message('input$loadDebugMessage 222')
-    # })
+
+    print("SERVER GOT TO HERE")
+
+    # source("server/initializeSession.R", local = TRUE)
+    # if(!initializeSessionSuccess) return( show(CONSTANTS$apps$scriptSourceError) )
+    # show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)
+    #      CONSTANTS$apps$serverBusy else CONSTANTS$apps$launchPage)        
+    # createSpinner() # create the loading spinner
+    # source("server/observeAuthentication.R", local = TRUE)
+    # source("server/initializeLaunchPage.R", local = TRUE)
+    # source("server/observeLoadRequest.R", local = TRUE)
+    # source("server/onSessionEnded.R", local = TRUE)
 }
 
 #----------------------------------------------------------------------
 # MAIN SERVER function: set/get session cookie and act on its values
 #----------------------------------------------------------------------
 server <- function(input, output, session){
-    # message('--------- RUNNING shared/server.R::server() ---------')
-    # message()
+    message('--------- RUNNING server.R::server() ---------')
 
     # send message to javascript to set the session key (won't override an existing session)
     session$sendCustomMessage('initializeSession', list(
-        value = nonce(),
-        isServerMode = serverEnv$IS_SERVER
+        value = nonce()
     ))
 
     # listen for the response and act accordingly
@@ -88,7 +72,7 @@ server <- function(input, output, session){
                 'setDocumentCookie',
                 list(
                     name  = 'hasLoggedIn',
-                    data  = list(value = 1, isServerMode = serverEnv$IS_SERVER)
+                    data  = list(value = 1)
                 )
             )
             serverFn(input, output, session,
