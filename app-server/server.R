@@ -25,13 +25,44 @@ serverFn <- function(input, output, session,
     sessionInput <- input
     sessionSession <- session
 
-    print("SERVER GOT TO HERE")
+    # initialize the user on the page
+    sessionEnv <- environment()
+    if(file.exists(sessionFile)){
+        load(sessionFile, envir = sessionEnv)
+        # headerStatusData$userDisplayName <- authenticatedUserData$user$displayName
+    }
+
+    # enable the login buttons on the help page
+    observeEvent(input$oauth2LoginButton, {
+        url <- getOauth2RedirectUrl(sessionKey) 
+        runjs(paste0('window.location.replace("', url, '")'));
+    })
+    if(restricted) return(NULL)
+
+    print("AUTHENTICATED")
+
+    # # determine whether session has an authorized user
+    # isAuthorizedUser <- function(){
+    #     !serverEnv$REQUIRES_AUTHENTICATION || # private server users are implicitly authorized
+    #     !is.null(authenticatedUserData$authorization) # doesn't care _what_ is authorized at this stage
+    # }
+
+    # # 
+    # if(restricted){
+    #     observeEvent(input$oauth2LoginButton, {
+    #         print(cookie)
+    #         print(sessionKey)
+    #         redirectToOauth2Login(sessionKey)
+    #     })
+    # } else {
+    #     "contents pending"
+    # }
+
+
+
 
     # source("server/initializeSession.R", local = TRUE)
     # if(!initializeSessionSuccess) return( show(CONSTANTS$apps$scriptSourceError) )
-    # show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)
-    #      CONSTANTS$apps$serverBusy else CONSTANTS$apps$launchPage)        
-    # createSpinner() # create the loading spinner
     # source("server/observeAuthentication.R", local = TRUE)
     # source("server/initializeLaunchPage.R", local = TRUE)
     # source("server/observeLoadRequest.R", local = TRUE)
@@ -42,7 +73,7 @@ serverFn <- function(input, output, session,
 # MAIN SERVER function: set/get session cookie and act on its values
 #----------------------------------------------------------------------
 server <- function(input, output, session){
-    message('--------- RUNNING server.R::server() ---------')
+    # message('--------- RUNNING server.R::server() ---------')
 
     # send message to javascript to set the session key (won't override an existing session)
     session$sendCustomMessage('initializeSession', list(

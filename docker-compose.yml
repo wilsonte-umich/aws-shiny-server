@@ -80,7 +80,7 @@ services:
       # this permanent Docker volume stores the R package library
       - package-dir:${PACKAGE_DIR}
       # bind mounts are ideal for data transfers into and out of the web page
-      - /srv/app:/srv/app
+      - /srv/apps:/srv/apps
       - /srv/data:/srv/data
       - /srv/private:/srv/private  
     labels:

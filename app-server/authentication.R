@@ -93,33 +93,33 @@ handleOauth2Response <- function(sessionKey, queryString){
     stateMatch <- getAuthenticationStateKey(sessionKey) == queryString$state
     if(stateMatch){ # validate state to prevent cross site forgery
         config <- getOauth2Config()
-        token <- oauth2.0_access_token( # completes the OAuth2 authorization sequence
+        access_token <- oauth2.0_access_token( # completes the OAuth2 authorization sequence
             endpoint = config$endpoints, # returns different tokens on each call
             app      = config$app,       # access tokens have expires_in = 172800 seconds = 48 hours
             code     = queryString$code
         )
 
         # record authenticated user information
-        authenticatedUserData <- list(token = convertOauth2Token(token))
-        str(authenticatedUserData)
-        # authenticatedUserData$user <- jwt_decode_sig(token$id_token, config$publicKey) # using the id_token
-        # authenticatedUserData$user$displayName <- authenticatedUserData$user$email
-
-        content <- tryCatch({
+        authenticatedUserData <- list(
+            token = convertOauth2Token(access_token)
+        )
+        tryCatch({
             req <- GET(
                 "https://www.googleapis.com/oauth2/v1/userinfo",
-                httr::config(token = token)
+                httr::config(token = authenticatedUserData$token)
             )
             stop_for_status(req)
-            content(req)            
+            userinfo <- content(req)
+            if(!is.null(userinfo$verified_email) || userinfo$verified_email){
+                authenticatedUserData$email <- userinfo$email
+            }
         }, error = function(e){
             print(e)
-            NULL
         }) 
-        print(content)
+        str(authenticatedUserData)
 
         # save authenticated and authorized user data in a session file
-        # save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
+        save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
     } else {
         message('!! OAuth2 state check failed !!')   
     }
