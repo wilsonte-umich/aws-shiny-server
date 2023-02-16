@@ -9,12 +9,15 @@ library(shinyjs)
 library(httr)
 library(urltools)
 library(digest)
+library(shinyBS)
 
 source("authentication.R")
 
 serverEnv$SERVER_URL <- paste0("https://", serverEnv$WEB_DOMAIN)
 serverEnv$REQUIRES_AUTHENTICATION <- isTruthy(serverEnv$GOOGLE_CLIENT_ID) || isTruthy(serverEnv$GOOGLE_CLIENT_SECRET)
 serverEnv$SERVER_ID <- sample(1e8, 1)
+serverEnv$SESSIONS_DIR <- file.path(serverEnv$DATA_DIR, "sessions")
+if(!dir.exists(serverEnv$SESSIONS_DIR)) dir.create(serverEnv$SESSIONS_DIR)
 
 runApp(
     appDir = '.',

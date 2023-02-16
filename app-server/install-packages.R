@@ -11,9 +11,9 @@ commonPackages <- c(
     "shinyjs", # used to support user authentication
     "httr",
     "urltools",
-    "digest"
-    # "openssl"
-    # "jose"
+    "digest",
+    "shinydashboard", # additional shiny support packages
+    "shinyBS"
 )
 
 # install missing common packages

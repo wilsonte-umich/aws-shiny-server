@@ -1,30 +1,20 @@
 #----------------------------------------------------------------------
 # set up the UI dashboard and launch page (i.e., the interface for first file upload)
-# re-sourced by run_server.R > Shiny::runApp() whenever this script changes
-# ui() function called once per Shiny session
 #----------------------------------------------------------------------
 
 # STYLES AND SCRIPTS, loaded into html <head>
 htmlHeadElements <- tags$head(
-    # tags$link(href = "framework.css", rel = "stylesheet", type = "text/css"), # framework js and css
     tags$script(src = "server.js", type = "text/javascript", charset = "utf-8")
 )
 
 # LAUNCH PAGE ASSEMBLY: called by ui function (below) as needed
 getLaunchPage <- function(cookie, restricted = FALSE){
     fluidPage(
+        style = "margin: 0; padding: 0;",
         htmlHeadElements,
         useShinyjs(), # enable shinyjs
         HTML(paste0("<input type=hidden id='sessionNonce' value='", setSessionKeyNonce(cookie$sessionKey), "' />")),
-        fluidRow(
-            column(12,
-                if(restricted){
-                    actionButton("oauth2LoginButton", "Login using Google", style = "margin: 1em;")
-                } else {
-                    "contents pending"
-                }
-            )
-        )
+        uiOutput("mainUiContent")
     )  
 }
 

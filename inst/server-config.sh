@@ -23,7 +23,7 @@ export N_SERVER_PROCESSES=1
 # the URL of the GitHub repository that carries your _single_ Shiny app
 # see documentation for repo requirements
 # alternatively, you may populate /srv/apps/<YOUR_APP_NAME> another way
-# leave this entry blank if your server will host multiple apps, they must be added manually
+# leave this entry blank if your server will host multiple apps, which must be added manually
 export APP_GITHUB_REPO=""
 
 # the parameters that define your Google web app

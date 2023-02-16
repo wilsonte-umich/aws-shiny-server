@@ -3,7 +3,7 @@
 # provides user authentication but NOT app authorization
 #----------------------------------------------------------------------
 
-# get 'code', 'state' and other flow control parameters from query string
+# get 'code', 'state' and other flow control parameters from a cookie
 parseCookie <- function(cookie){ 
     nullCookie <- list()
     if(is.null(cookie) || cookie == "") return( nullCookie )
@@ -35,11 +35,19 @@ getSessionKeyFromNonce <- function(sessionNonce){
     sessionNonceCache[[sessionNonce]] <<- NULL
     sessionKey
 }
+purgeSessionCache <- function(){
+    sesionFiles <- list.files(path = serverEnv$SESSIONS_DIR, full.names = TRUE, include.dirs = TRUE)
+    for(sessionFile in sesionFiles){
+        mtime <- file.info(sessionFile)$mtime
+        diffmtime <- difftime(Sys.time(), mtime, units = "days")
+        if(diffmtime > 2) file.remove(sessionFile) # 2 days
+    }
+}
 
 # standardized session file paths
 getAuthenticatedSessionFile <- function(type, key){ 
     if(is.null(key)) key <- "XXXXXXXX"
-    file.path(serverEnv$DATA_DIR, paste(type, key, sep = "-"))
+    file.path(serverEnv$SESSIONS_DIR, paste(type, key, sep = "-"))
 }
 
 # derive a unique and opaque one-way hash of a signed sessionKey for use as a state parameter
@@ -65,9 +73,6 @@ getOauth2Config <- function(){
             redirect_uri = serverEnv$SERVER_URL
         ),
         scope = "https://www.googleapis.com/auth/userinfo.email"
-        # ,
-        # publicKey = googlePublicKey,
-        # urls      = list()
     )
 }
 
@@ -100,26 +105,23 @@ handleOauth2Response <- function(sessionKey, queryString){
         )
 
         # record authenticated user information
-        authenticatedUserData <- list(
+        authenticationData <- list(
             token = convertOauth2Token(access_token)
         )
         tryCatch({
             req <- GET(
                 "https://www.googleapis.com/oauth2/v1/userinfo",
-                httr::config(token = authenticatedUserData$token)
+                httr::config(token = authenticationData$token)
             )
             stop_for_status(req)
             userinfo <- content(req)
             if(!is.null(userinfo$verified_email) || userinfo$verified_email){
-                authenticatedUserData$email <- userinfo$email
+                authenticationData$user <- userinfo
+                save(authenticationData, file = getAuthenticatedSessionFile('session', sessionKey)) # read at next load
             }
         }, error = function(e){
             print(e)
         }) 
-        str(authenticatedUserData)
-
-        # save authenticated and authorized user data in a session file
-        save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
     } else {
         message('!! OAuth2 state check failed !!')   
     }

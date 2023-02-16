@@ -5,7 +5,7 @@ from an AWS server instance. The installation supports:
 
 - https/SSL/TLS encryption for secure access via LetsEncrypt
 - a session cookie you can use for tracking user sessions
-- complete control of private information such as keys, etc.
+- control of private information such as keys, etc.
 - user authentication via Google Oauth2 login
 
 The web server is run as a set of microservices from within
@@ -23,7 +23,7 @@ host over which you have a higher degree of control.
 ### Use an available Amazon Machine Image
 
 The recommended way to start a new app server on AWS
-is to launch a new instance from one of our pre-installed AMIs:
+is to launch a new instance from one of our pre-installed public AMIs:
 
 - [aws-shiny-server AWS AMIs](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#Images:visibility=public-images;search=:aws-shiny-server)
 
@@ -46,13 +46,20 @@ cd aws-shiny-server
 ./server          # show command help
 ./server setup    # install Docker, set additional paths
 newgrp docker     # activate the current session to allow docker access
-bash ~/.bashrc    # enable current session to use server utility directly
 ./server build    # build the base-level Docker containers (without your app yet)
 ./server install  # install common R packages
 ```
 
 Once you have run the `server setup` command, the `server` utility
-will be available to you at any command prompt.
+will be available to you at any command prompt (if not, reboot).
+
+If you would like to make an AMI from your new instance, you should now
+execute the following command to clean up protected information from the instance.
+Then, immediately create your AMI from the AWS Management Console.
+
+```
+./server sanitize 
+```
 
 ## Configure your web server details
 
@@ -63,18 +70,20 @@ yourself and your desired server properties - follow the instructions in the fil
 server config  # edits file /srv/private/server-config.sh
 ```
 
-## Setting up your app(s) on the server
+## Set up your app(s) on the server
 
 ### Copy your app code to the instance
 
-Use the following command to clone a single git repository that contains your app code, as specified in config variable APP_GITHUB_REPO. You will need to provide credentials if your repository is private.
+Use the following command to clone a single git repository that contains your app code, 
+as specified in config variable APP_GITHUB_REPO. You will need to provide credentials if your repository is private.
 
 ```sh
 server clone # clones the repository set in server-config.sh, if any
 ```
 
 Alternatively, use whatever method you'd like to get your Shiny app on your AWS instance.
-If you will host more than one app from the same server, you must leave the APP_GITHUB_REPO config entry blank and manually clone or create all apps.
+If you will host more than one app from the same server, you must leave the APP_GITHUB_REPO 
+config entry blank and manually clone or create all apps.
 
 ### App configuration requirements
 
@@ -90,7 +99,6 @@ The R script(s) that define your app will be sourced into the global environment
 after user authentication and app selection. The scripts must declare two typical Shiny functions that define the app:
 - `ui <- function(request) ...`
 - `server <- function(input, output, session) ...`
-
 
 ## Install the app(s) for use
 
@@ -109,7 +117,13 @@ server down  # stop the server
 ```
 
 After running `server up`, wait a minute or two and your server should
-be running at the URL you provided in `server-config.sh`.
+be running at the URL you provided in `server-config.sh`. 
+
+The first time
+you load the web page on a new server, LetsEncrypt needs to negotiate your
+server certificate, which takes some time. Until it resolves, you will
+be told by your browser that the site is "not secure". Wait, close your browser,
+and try again until it works and you have a secure https connection. 
 
 ### Debug your app code
 
@@ -124,8 +138,8 @@ server up debug  # start the server in interactive mode
 
 ## Server and app security
 
-The aws-shiny-server repository is open-source so you may see exactly 
-what the code is - and isn't! - doing. We will never send any information you 
+The aws-shiny-server repository is open-source so you can see exactly 
+what the code is - and isn't! - doing. It never sends any information you 
 enter into your AWS instance to anyone except for Google user authentication.
 Anything you do with our code on your instance is entirely private to you 
 and your app users. If you don't trust us, don't use this repository.
@@ -146,8 +160,10 @@ will let your app know who someone is, it is up to your app to determine
 if that person is allowed to load the app, execute an action, etc., 
 based on their email address.
 
-User identity is passed to your app PENDING. Their gmail address
-acts as the unique identifier for who that person is, so your
+User identity is passed to your app via variable `authenticationData$user`
+which is avaiable to both your ui and server functions.
+A user's gmail address, `authenticationData$user$email`,
+acts as the unique identifier of who that person is, so your
 app must somehow maintain a list of allowed email addresses, etc.
 
 ### Private data directory
