@@ -59,6 +59,7 @@ COPY ./install-packages.R    $TOOLS_DIR/install-packages.R
 COPY ./start-app-server.R    $TOOLS_DIR/start-app-server.R
 COPY ./ui.R                  $TOOLS_DIR/ui.R
 COPY ./server.R              $TOOLS_DIR/server.R
+COPY ./server-pages.R        $TOOLS_DIR/server-pages.R
 COPY ./authentication.R      $TOOLS_DIR/authentication.R
 COPY ./server.js             $TOOLS_DIR/www/server.js
 

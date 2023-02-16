@@ -28,25 +28,42 @@ serverFn <- function(input, output, session,
         load(sessionFile, envir = sessionEnv) # puts authenticationData in scope
     }
 
-    # enable the login buttons on the help page
-    output$mainUiContent <- renderUI({
+    # select the UI to show, either login button, app selection or the selected/only app
+    # app is responsible for authorization, i.e., whether to let the authenticated email use the app
+    selectedApp <- reactiveVal(NULL)
+    sourceApp <- function(appName){
+        appDir      <- file.path(serverEnv$APPS_DIR, appName)
+        appFile     <- file.path(appDir, "app.R")
+        uiFile      <- file.path(appDir, "ui.R")
+        serverFile  <- file.path(appDir, "server.R")
+        if(file.exists(appFile)) {
+            source(appFile, local = sessionEnv)
+        } else {
+            source(uiFile, local = sessionEnv)
+            source(serverFile, local = sessionEnv)
+        }
+    }
+    output$awsShinyServer <- renderUI({
         if(restricted){
             observeEvent(input$oauth2LoginButton, {
                 url <- getOauth2RedirectUrl(sessionKey) 
                 runjs(paste0('window.location.replace("', url, '")'));
-            })            
-            tags$div(
-                style = "padding: 30px;",
-                bsButton("oauth2LoginButton", "Log in using Google", style = "primary")
-            )
+            })
+            showLoginPage()
         } else {
-            tags$div(
-                style = "padding: 30px;",
-                paste(
-                    "AUTHENTICATED: pending from server",
-                    authenticationData$user$email
-                )
-            )
+            appName <- selectedApp()
+            if(isTruthy(appName)){
+                sourceApp(appName)
+                server(input, output, session)
+                ui(request)
+            } else {
+                appNames <- getAvailableAppNames()
+                if(length(appNames) > 1) showAppSelectionPage(input, appNames, selectedApp) 
+                else {
+                    selectedApp(appNames)
+                    NULL
+                }
+            }
         }
     })
 

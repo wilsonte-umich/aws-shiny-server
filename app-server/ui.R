@@ -2,20 +2,14 @@
 # set up the UI dashboard and launch page (i.e., the interface for first file upload)
 #----------------------------------------------------------------------
 
-# STYLES AND SCRIPTS, loaded into html <head>
-htmlHeadElements <- tags$head(
-    tags$script(src = "server.js", type = "text/javascript", charset = "utf-8")
-)
-
 # LAUNCH PAGE ASSEMBLY: called by ui function (below) as needed
 getLaunchPage <- function(cookie, restricted = FALSE){
-    fluidPage(
-        style = "margin: 0; padding: 0;",
-        htmlHeadElements,
+    tagList(
+        tags$script(src = "server.js", type = "text/javascript", charset = "utf-8"),
         useShinyjs(), # enable shinyjs
         HTML(paste0("<input type=hidden id='sessionNonce' value='", setSessionKeyNonce(cookie$sessionKey), "' />")),
-        uiOutput("mainUiContent")
-    )  
+        uiOutput("awsShinyServer")
+    )
 }
 
 # AUTHENTICATION FLOW CONTROL, i.e., page redirects, associated with authentication interactions

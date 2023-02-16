@@ -1,7 +1,7 @@
 # aws-shiny-server
 
 This repository helps you easily host one or more R Shiny web apps
-from an AWS server instance. The installation supports:
+from an AWS server instance. The installation gives you:
 
 - https/SSL/TLS encryption for secure access via LetsEncrypt
 - a session cookie you can use for tracking user sessions
@@ -17,6 +17,11 @@ and manage all microservice images.
 A main alternative is to use <https://shinyapps.io>, which is a better solution for many. 
 However, sometimes you want to launch an app on an inexpensive public 
 host over which you have a higher degree of control.
+
+This repository was developed using Amazon Web Services (AWS) and has 
+only been tested there. However, it will probably work to create
+a similar web server at any other cloud computing service provider
+such as Google Cloud or Microsoft Azure.
 
 ## Server setup
 
@@ -41,7 +46,7 @@ aws-shiny-server from scratch.
 ```sh
 cd /srv # move to the server installation directory
 sudo git clone https://github.com/wilsonte-umich/aws-shiny-server.git # clone this repo
-sudo chown -R ubuntu aws-shiny-server # set permissions
+sudo chown -R $USER aws-shiny-server # set permissions
 cd aws-shiny-server
 ./server          # show command help
 ./server setup    # install Docker, set additional paths
@@ -91,14 +96,18 @@ The following requirements must be met for each app for it to be properly
 recognized and installed:
 
 - the app root directory must be: `/srv/apps/<your-app-name>`
-- each app root directory must contain files:
+- each app root directory should contain files:
     - `install-packages.yml` = a simple list of the unquoted names of the R pacakages your app requires, one line per package
     - either a single script `app.R` or two scripts `ui.R` and `server.R`
 
-The R script(s) that define your app will be sourced into the global environment
-after user authentication and app selection. The scripts must declare two typical Shiny functions that define the app:
+The R script(s) that define your app will be sourced after user authentication and app selection. 
+The scripts must declare two typical Shiny functions that define the app and that will be called to load it:
 - `ui <- function(request) ...`
 - `server <- function(input, output, session) ...`
+
+Your app scripts should NOT call shiny::runApp() or other similar function to launch the app.
+Your app will be embedded into the aws-shiny-server wrapper page, i.e., 
+Shiny will already be running.
 
 ## Install the app(s) for use
 
@@ -133,7 +142,7 @@ R output for debugging purposes use:
 ```sh
 server down      # stop the server
 server up debug  # start the server in interactive mode
-# hit Ctrl-C to exit
+# hit Ctrl-C to exit debug mode
 ```
 
 ## Server and app security
@@ -142,12 +151,13 @@ The aws-shiny-server repository is open-source so you can see exactly
 what the code is - and isn't! - doing. It never sends any information you 
 enter into your AWS instance to anyone except for Google user authentication.
 Anything you do with our code on your instance is entirely private to you 
-and your app users. If you don't trust us, don't use this repository.
+and your app users. If you don't trust us, don't use this repository or 
+audit our code.
 
 Please use the following mechanisms to maintain security of your server
 and apps. 
 
-### User authentication and authorization via Google
+### User authentication via Google
 
 If you provide values for `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
 in your server configuration file, the first screen users will see 
@@ -162,9 +172,9 @@ based on their email address.
 
 User identity is passed to your app via variable `authenticationData$user`
 which is avaiable to both your ui and server functions.
-A user's gmail address, `authenticationData$user$email`,
+A user's Google-verified email address, `authenticationData$user$email`,
 acts as the unique identifier of who that person is, so your
-app must somehow maintain a list of allowed email addresses, etc.
+app must maintain a list of allowed email addresses, etc.
 
 ### Private data directory
 
@@ -177,4 +187,18 @@ For example:
 myData <- read_yaml(file.path(Sys.getenv("PRIVATE_DIR"), "myData.yml"))
 # use it
 rm(myData)
+```
+
+## Server customization
+
+The server login and app seletion pages are deliberately simple.
+You can customize them to your needs, e.g., to add a logo or use a specific page style, after installing your server as follows:
+
+```sh
+cd /srv/aws-shiny-server/app-server
+nano server-pages.R # <<< defines two functions that assemble the login and app selection pages
+server down
+server build
+server install
+server up
 ```

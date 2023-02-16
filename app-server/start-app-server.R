@@ -12,6 +12,7 @@ library(digest)
 library(shinyBS)
 
 source("authentication.R")
+source("server-pages.R")
 
 serverEnv$SERVER_URL <- paste0("https://", serverEnv$WEB_DOMAIN)
 serverEnv$REQUIRES_AUTHENTICATION <- isTruthy(serverEnv$GOOGLE_CLIENT_ID) || isTruthy(serverEnv$GOOGLE_CLIENT_SECRET)

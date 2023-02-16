@@ -49,16 +49,16 @@ echo \
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-# allow user ubuntu to control docker without sudo
+# allow current user to control docker without sudo
 echo 
-echo "adding ubuntu to docker group"
-sudo usermod -aG docker ubuntu
+echo "adding $USER to docker group"
+sudo usermod -aG docker $USER
 
 # set server groups
 echo 
 echo "creating shiny-edit group"
 sudo groupadd shiny-edit
-sudo usermod -a -G shiny-edit ubuntu
+sudo usermod -a -G shiny-edit $USER
 
 # set server paths and permissions
 echo 
@@ -67,13 +67,13 @@ cd /srv
 sudo mkdir -p apps    # for app server code
 sudo mkdir -p data    # for external data bind-mounted into running instances
 sudo mkdir -p private # for non-repository information such as access keys
-sudo chown -R ubuntu     apps data private aws-shiny-server
+sudo chown -R $USER     apps data private aws-shiny-server
 sudo chmod -R u+rwx      private aws-shiny-server
 sudo chgrp -R shiny-edit apps data
 sudo chmod -R ug+rwx     apps data
 
 #---------------------------------------------------------------
-# continue as user ubuntu (i.e., not sudo) to populate /srv
+# continue as regular user (i.e., not sudo) to populate /srv
 #---------------------------------------------------------------
 
 # copy web server configuration templates to final location outside of the repo
