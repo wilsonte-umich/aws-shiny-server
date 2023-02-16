@@ -24,13 +24,14 @@ getRPackages <- function(lib) {
 installMissingPackages <- function(packages){
     existingPackages <- unique(unlist(sapply(.libPaths(), getRPackages)))
     newPackages <- packages[!(packages %in% existingPackages)]
-    if(length(newPackages) == 0) return()
+    if(length(newPackages) == 0) return("OK")
     install.packages(
         newPackages, 
         lib = env$PACKAGE_DIR, 
         repos = "https://cloud.r-project.org/",
         Ncpus = as.integer(env$N_CPU)
     )
+    "OK"
 }
 installMissingPackages(commonPackages)
 
@@ -42,16 +43,16 @@ appDirs <- if(is.null(env$APP_GITHUB_REPO) || env$APP_GITHUB_REPO == "") {
     file.path(env$APPS_DIR, repo)
 }
 if(is.na(appDirs) || !dir.exists(appDirs[1])){
-    message("missing app directory(s), aborting with nothing to do")
+    message("no installed apps, no additional packages to install")
     q('no')
 }
-appPackages <- unique(sapply(appDirs, function(appDir){
+appPackages <- unique(unlist(sapply(appDirs, function(appDir){
     appPackagesFile <- file.path(appDir, "install-packages.yml")
     if(!file.exists(appPackagesFile)) return(character())
     unlist(yaml::read_yaml(appPackagesFile))  
-}))
-if(length(appPackages) == 0){
-    message("no app R package requirements found, aborting with nothing to do")
+})))
+if(is.null(appPackages) || length(appPackages) == 0){
+    message("no app R package requirements found, no additional packages to install")
     q('no')
 }
 installMissingPackages(appPackages)
