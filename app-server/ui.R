@@ -5,7 +5,7 @@
 # LAUNCH PAGE ASSEMBLY: called by ui function (below) as needed
 getLaunchPage <- function(cookie, restricted = FALSE){
     tagList(
-        tags$script(src = "server.js", type = "text/javascript", charset = "utf-8"),
+        tags$script(src = "aws-shiny-server.js", type = "text/javascript", charset = "utf-8"),
         useShinyjs(), # enable shinyjs
         HTML(paste0("<input type=hidden id='sessionNonce' value='", setSessionKeyNonce(cookie$sessionKey), "' />")),
         uiOutput("awsShinyServer")

@@ -12,6 +12,7 @@ function show_usage {
     echo "    build     run docker compose build to create all needed Docker images"
     echo "    install   update the server config, clone GitHub repos, install R packages"
     echo "    up        launch all containers to run the app server"
+    echo "    ls        list all stored Docker images and running containers"
     echo "    down      stop and remove any running containers to shut down the app server"
     echo
     echo "additional resource management commands:"

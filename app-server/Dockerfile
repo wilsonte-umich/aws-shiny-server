@@ -28,7 +28,8 @@ RUN apt-get update && apt-get install -y \
     time \
     nano \
     tree \
-    curl
+    curl \
+    libsodium-dev
 
 # hard set installation directory in image
 ARG APPS_DIR
@@ -61,7 +62,7 @@ COPY ./ui.R                  $TOOLS_DIR/ui.R
 COPY ./server.R              $TOOLS_DIR/server.R
 COPY ./server-pages.R        $TOOLS_DIR/server-pages.R
 COPY ./authentication.R      $TOOLS_DIR/authentication.R
-COPY ./server.js             $TOOLS_DIR/www/server.js
+COPY ./aws-shiny-server.js   $TOOLS_DIR/www/aws-shiny-server.js
 
 # if this image is run as a container manually, just provide a command line
 # start-app-server.R is called via 'command' in docker-compose.yml

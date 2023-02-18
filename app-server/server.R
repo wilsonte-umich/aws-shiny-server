@@ -36,12 +36,16 @@ serverFn <- function(input, output, session,
         appFile     <- file.path(appDir, "app.R")
         uiFile      <- file.path(appDir, "ui.R")
         serverFile  <- file.path(appDir, "server.R")
+        wwwDir      <- file.path(appDir, "www")
         if(file.exists(appFile)) {
             source(appFile, local = sessionEnv)
         } else {
             source(uiFile, local = sessionEnv)
             source(serverFile, local = sessionEnv)
         }
+        if(dir.exists(wwwDir)) for(object in list.files(wwwDir, full.names = TRUE)){ # enable the app's www folder
+            file.copy(object, file.path(serverEnv$TOOLS_DIR, "www"), recursive = TRUE)
+        } 
     }
     output$awsShinyServer <- renderUI({
         if(restricted){
@@ -55,7 +59,12 @@ serverFn <- function(input, output, session,
             if(isTruthy(appName)){
                 sourceApp(appName)
                 server(input, output, session)
-                ui(request)
+                ui <- ui(request) # intercept and apply body attributes, since we already have a <body> tag in place
+                if(is.list(ui) && !is.null(ui$name) && ui$name == "body" && is.list(ui$attribs)){
+                    if(!is.null(ui$attribs$class)) addClass(selector = "body", class = ui$attribs$class)
+                    if(!is.null(ui$attribs$style)) runjs( paste("$('body').attr('style', '", ui$attribs$style, "')") )
+                }
+                ui  
             } else {
                 appNames <- getAvailableAppNames()
                 if(length(appNames) > 1) showAppSelectionPage(input, appNames, selectedApp) 
