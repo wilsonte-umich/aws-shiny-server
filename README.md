@@ -97,8 +97,16 @@ recognized and installed:
 
 - the app root directory must be: `/srv/apps/<your-app-name>`
 - each app root directory should contain files:
-    - `install-packages.yml` = a simple list of the unquoted names of the R pacakages your app requires, one line per package
+    - `install-packages.yml` = a simple list of the names of the R pacakages your app requires, one line per package
     - either a single script `app.R` or two scripts `ui.R` and `server.R`
+
+An example packages file might be:
+```yml
+# /srv/apps/<your-app-name>/install-packages.yml
+- shiny
+- ggplot2
+- dplyr
+```
 
 The R script(s) that define your app will be sourced after user authentication and app selection. 
 The scripts must declare two typical Shiny functions that define the app and that will be called to load it:
