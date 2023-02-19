@@ -58,12 +58,12 @@ serverFn <- function(input, output, session,
             appName <- selectedApp()
             if(isTruthy(appName)){
                 sourceApp(appName)
-                server(input, output, session)
                 ui <- ui(request) # intercept and apply body attributes, since we already have a <body> tag in place
                 if(is.list(ui) && !is.null(ui$name) && ui$name == "body" && is.list(ui$attribs)){
                     if(!is.null(ui$attribs$class)) addClass(selector = "body", class = ui$attribs$class)
                     if(!is.null(ui$attribs$style)) runjs( paste("$('body').attr('style', '", ui$attribs$style, "')") )
                 }
+                delay(500, server(input, output, session))              
                 ui  
             } else {
                 appNames <- getAvailableAppNames()

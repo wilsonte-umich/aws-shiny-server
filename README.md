@@ -7,6 +7,7 @@ from an AWS server instance. The installation gives you:
 - a session cookie you can use for tracking user sessions
 - control of private information such as keys, etc.
 - user authentication via Google Oauth2 login
+- a switchboard from selecting among multiple apps
 
 The web server is run as a set of microservices from within
 [Docker containers](https://www.docker.com/). One container runs the [Traefik](https://docs.traefik.io) reverse proxy/load balancer
@@ -30,7 +31,7 @@ such as Google Cloud or Microsoft Azure.
 The recommended way to start a new app server on AWS
 is to launch a new instance from one of our pre-installed public AMIs:
 
-- [aws-shiny-server AWS AMIs](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#Images:visibility=public-images;search=:aws-shiny-server)
+- [aws-shiny-server AWS AMIs](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#Images:visibility=public-images;search=:aws-shiny-server;v=3;$case=tags:false%5C,client:false;$regex=tags:false%5C,client:false)
 
 Log in as you would to any other AWS instance and continue to configure your app as described below.
 
@@ -100,7 +101,7 @@ recognized and installed:
     - `install-packages.yml` = a simple list of the names of the R pacakages your app requires, one line per package
     - either a single script `app.R` or two scripts `ui.R` and `server.R`
 
-An example packages file might be:
+An example packages file might be (notice the leading dashes):
 ```yml
 # /srv/apps/<your-app-name>/install-packages.yml
 - shiny
@@ -130,6 +131,7 @@ server install  # intall the required R packages
 
 ```sh
 server up    # start the server
+server ls    # list stored images and running containers
 server down  # stop the server
 ```
 
@@ -182,7 +184,14 @@ User identity is passed to your app via variable `authenticationData$user`
 which is avaiable to both your ui and server functions.
 A user's Google-verified email address, `authenticationData$user$email`,
 acts as the unique identifier of who that person is, so your
-app must maintain a list of allowed email addresses, etc.
+app must maintain a list of allowed email addresses, etc. For example:
+
+```r
+allowedEmails <- c("abc@gmail.com")
+if(authenticationData$user$email %in% allowedEmails){
+    # do restricted work
+}
+```
 
 ### Private data directory
 
@@ -210,3 +219,19 @@ server build
 server install
 server up
 ```
+
+## Additional consideration for transferring apps into aws-shiny-server
+
+For the most part, your app should work the same inside or outside of
+aws-shiny-server, but you may encounter a few reasons you will need to tweak your code. 
+
+As noted above, do NOT call shiny::runApp() or other similar function.
+
+Your app will be loaded into a pre-existing "body" element, which might lead to some confusion
+or missing attributes, although aws-shiny-server injects
+classes and styles from your page into the pre-existing body tag. 
+
+As we encounter more of these situations we will endeavor to tweak
+aws-shiny-server to handle such exceptions for you. Please post
+an issue if you find that your app works outside, but not inside, of
+aws-shiny-server.

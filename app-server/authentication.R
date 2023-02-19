@@ -63,28 +63,28 @@ getUserSessionState <- function(sessionKey){
 }
 
 # Google API
-getOauth2Config <- function(){
-    list(
-        endpoints = oauth_endpoints("google"),
-        app = oauth_app(
-            appname = "aws-shiny-server",
-            key     = serverEnv$GOOGLE_CLIENT_ID,
-            secret  = serverEnv$GOOGLE_CLIENT_SECRET,
-            redirect_uri = serverEnv$SERVER_URL
-        ),
-        scope = "https://www.googleapis.com/auth/userinfo.email"
-    )
-}
+oauth2Config <- list(
+    endpoints = oauth_endpoints("google"),
+    app = oauth_app(
+        appname = "aws-shiny-server",
+        key     = serverEnv$GOOGLE_CLIENT_ID,
+        secret  = serverEnv$GOOGLE_CLIENT_SECRET,
+        redirect_uri = serverEnv$SERVER_URL
+    ),
+    scope = "https://www.googleapis.com/auth/userinfo.email"
+)
+Sys.setenv(GOOGLE_CLIENT_ID = "", GOOGLE_CLIENT_SECRET = "")
+serverEnv$GOOGLE_CLIENT_ID <- NULL
+serverEnv$GOOGLE_CLIENT_SECRET <- NULL
 
 # initialize OAuth2 by redirecting user to auth and login
 getOauth2RedirectUrl <- function(sessionKey, state = list()){
     stateKey <- getAuthenticationStateKey(sessionKey)
     save(state, file = getAuthenticatedSessionFile('state', stateKey))
-    config <- getOauth2Config()
     oauth2.0_authorize_url(
-        endpoint = config$endpoints,
-        app      = config$app, 
-        scope    = config$scope,
+        endpoint = oauth2Config$endpoints,
+        app      = oauth2Config$app, 
+        scope    = oauth2Config$scope,
         state    = stateKey
     )
 }
@@ -97,10 +97,9 @@ redirectToOauth2Login <- function(sessionKey, state = list()){
 handleOauth2Response <- function(sessionKey, queryString){
     stateMatch <- getAuthenticationStateKey(sessionKey) == queryString$state
     if(stateMatch){ # validate state to prevent cross site forgery
-        config <- getOauth2Config()
         access_token <- oauth2.0_access_token( # completes the OAuth2 authorization sequence
-            endpoint = config$endpoints, # returns different tokens on each call
-            app      = config$app,       # access tokens have expires_in = 172800 seconds = 48 hours
+            endpoint = oauth2Config$endpoints, # returns different tokens on each call
+            app      = oauth2Config$app,       # access tokens have expires_in = 172800 seconds = 48 hours
             code     = queryString$code
         )
 
@@ -130,10 +129,9 @@ handleOauth2Response <- function(sessionKey, queryString){
 
 # convert tokens
 convertOauth2Token <- function(token){
-    config <- getOauth2Config()
     oauth2.0_token(
-        endpoint    = config$endpoints,
-        app         = config$app,
+        endpoint    = oauth2Config$endpoints,
+        app         = oauth2Config$app,
         credentials = token,
         cache = FALSE # handled elsewhere
     )
